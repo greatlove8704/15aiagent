@@ -1,0 +1,6 @@
+Đây là chương mẫu. Xóa file này sau khi bạn đã tải hai chương thật lên.
+
+Quy tắc đặt tên file: số - tên chương.txt
+Ví dụ: 002 - Người khách lạ.txt
+
+Mỗi đoạn văn cách nhau một dòng trống. Không cần thẻ HTML, không cần định dạng gì thêm. File phải được lưu ở mã hóa UTF-8.
