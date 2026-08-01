@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Truyện</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Tên truyện</h1>
+    <p class="sub">Một dòng giới thiệu ngắn.</p>
+  </header>
+  <ol id="list" class="toc"><li class="muted">Đang tải…</li></ol>
+  <footer class="muted">Danh sách chương tự cập nhật từ thư mục <code>chapters/</code>.</footer>
+</main>
+
+<script type="module">
+import { getChapters } from "./assets/app.js";
+
+const el = document.getElementById("list");
+try {
+  const chapters = await getChapters();
+  el.innerHTML = chapters.length
+    ? chapters.map(c => `
+        <li>
+          <a href="chapter.html?c=${encodeURIComponent(c.file)}">
+            ${c.num ? `<span class="num">Chương ${c.num}</span>` : ""}
+            <span class="title">${c.title}</span>
+          </a>
+        </li>`).join("")
+    : `<li class="muted">Chưa có chương nào.</li>`;
+} catch (e) {
+  el.innerHTML = `<li class="muted">Không tải được danh sách chương.</li>`;
+}
+</script>
+</body>
+</html>

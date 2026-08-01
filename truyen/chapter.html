@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đang tải…</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<main class="wrap reader">
+  <nav class="bar">
+    <a href="index.html">← Mục lục</a>
+    <span class="spacer"></span>
+    <button id="fontDown" title="Chữ nhỏ hơn">A−</button>
+    <button id="fontUp" title="Chữ to hơn">A+</button>
+  </nav>
+
+  <h1 id="title">Đang tải…</h1>
+  <article id="body"></article>
+
+  <nav class="bar bottom">
+    <a id="prev" class="hidden">← Chương trước</a>
+    <span class="spacer"></span>
+    <a id="next" class="hidden">Chương sau →</a>
+  </nav>
+</main>
+
+<script type="module">
+import { getChapters, getChapterText, renderText, qs } from "./assets/app.js";
+
+const file = qs("c");
+const titleEl = document.getElementById("title");
+const bodyEl = document.getElementById("body");
+
+const root = document.documentElement;
+let size = parseInt(localStorage.getItem("fontSize") || "19", 10);
+const applySize = () => {
+  root.style.setProperty("--fs", size + "px");
+  localStorage.setItem("fontSize", size);
+};
+applySize();
+document.getElementById("fontUp").onclick = () => { size = Math.min(28, size + 1); applySize(); };
+document.getElementById("fontDown").onclick = () => { size = Math.max(14, size - 1); applySize(); };
+
+try {
+  const chapters = await getChapters();
+  const i = chapters.findIndex(c => c.file === file);
+  if (i === -1) throw new Error("Không tìm thấy chương.");
+  const cur = chapters[i];
+
+  document.title = cur.num ? `Chương ${cur.num} — ${cur.title}` : cur.title;
+  titleEl.textContent = cur.num ? `Chương ${cur.num}: ${cur.title}` : cur.title;
+  bodyEl.innerHTML = renderText(await getChapterText(cur.file));
+
+  const link = (el, ch) => {
+    if (!ch) return;
+    el.href = `chapter.html?c=${encodeURIComponent(ch.file)}`;
+    el.classList.remove("hidden");
+  };
+  link(document.getElementById("prev"), chapters[i - 1]);
+  link(document.getElementById("next"), chapters[i + 1]);
+
+  addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft" && chapters[i - 1]) location.href = `chapter.html?c=${encodeURIComponent(chapters[i-1].file)}`;
+    if (e.key === "ArrowRight" && chapters[i + 1]) location.href = `chapter.html?c=${encodeURIComponent(chapters[i+1].file)}`;
+  });
+} catch (e) {
+  titleEl.textContent = "Lỗi";
+  bodyEl.innerHTML = `<p>${e.message}</p>`;
+}
+</script>
+</body>
+</html>
