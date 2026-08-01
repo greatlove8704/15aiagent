@@ -50,7 +50,7 @@ try {
 
   document.title = cur.num ? `Chương ${cur.num} — ${cur.title}` : cur.title;
   titleEl.textContent = cur.num ? `Chương ${cur.num}: ${cur.title}` : cur.title;
-  bodyEl.innerHTML = renderText(await getChapterText(cur.file));
+  bodyEl.innerHTML = renderText(await getChapterText(cur));
 
   const link = (el, ch) => {
     if (!ch) return;

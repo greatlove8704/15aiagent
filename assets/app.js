@@ -8,8 +8,9 @@ const CFG = {
 };
 // ==================
 
-const CACHE_KEY = "chapters_cache_v2";
+const CACHE_KEY = "chapters_cache_v3";
 const CACHE_TTL = 10 * 60 * 1000; // 10 phut
+const PART_RE = /^(.*)\.part(\d+)\.txt$/i;
 
 function esc(s) {
   return s.replace(/[&<>"']/g, function (c) {
@@ -21,9 +22,33 @@ function parseName(filename) {
   const base = filename.replace(/\.txt$/i, "");
   const m = base.match(/^\s*(\d+)\s*[-\u2013\u2014.]\s*(.+)$/);
   if (m) {
-    return { order: parseInt(m[1], 10), num: String(parseInt(m[1], 10)), title: m[2].trim(), file: filename };
+    return { order: parseInt(m[1], 10), num: String(parseInt(m[1], 10)), title: m[2].trim(), file: filename, parts: [] };
   }
-  return { order: 1e9, num: "", title: base, file: filename };
+  return { order: 1e9, num: "", title: base, file: filename, parts: [] };
+}
+
+// Gom cac file "<ten>.txt" + "<ten>.part2.txt" + "<ten>.part3.txt" thanh 1 chuong.
+function buildChapters(names) {
+  const bases = [];
+  const partsMap = {};
+
+  names.forEach(function (n) {
+    const m = n.match(PART_RE);
+    if (m) {
+      const key = m[1] + ".txt";
+      if (!partsMap[key]) partsMap[key] = [];
+      partsMap[key].push({ n: parseInt(m[2], 10), file: n });
+    } else {
+      bases.push(n);
+    }
+  });
+
+  return bases.map(function (n) {
+    const chapter = parseName(n);
+    const ps = (partsMap[n] || []).sort(function (a, b) { return a.n - b.n; });
+    chapter.parts = ps.map(function (p) { return p.file; });
+    return chapter;
+  });
 }
 
 async function fetchFromApi() {
@@ -33,16 +58,17 @@ async function fetchFromApi() {
   const res = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
   if (!res.ok) throw new Error("API " + res.status);
   const items = await res.json();
-  return items
+  const names = items
     .filter(function (i) { return i.type === "file" && /\.txt$/i.test(i.name); })
-    .map(function (i) { return parseName(i.name); });
+    .map(function (i) { return i.name; });
+  return buildChapters(names);
 }
 
 async function fetchFromManifest() {
   const res = await fetch(CFG.localDir + "/index.json", { cache: "no-cache" });
   if (!res.ok) throw new Error("khong co manifest");
   const names = await res.json();
-  return names.map(parseName);
+  return buildChapters(names);
 }
 
 export async function getChapters() {
@@ -70,10 +96,22 @@ export async function getChapters() {
   return list;
 }
 
-export async function getChapterText(file) {
+async function fetchOne(file) {
   const res = await fetch(CFG.localDir + "/" + encodeURIComponent(file), { cache: "no-cache" });
   if (!res.ok) throw new Error("Khong doc duoc chuong nay.");
   return res.text();
+}
+
+// Nhan vao object chuong (tu getChapters) hoac ten file.
+export async function getChapterText(chapter) {
+  const first = typeof chapter === "string" ? chapter : chapter.file;
+  const parts = typeof chapter === "string" ? [] : (chapter.parts || []);
+  const files = [first].concat(parts);
+  const texts = [];
+  for (let i = 0; i < files.length; i++) {
+    texts.push(await fetchOne(files[i]));
+  }
+  return texts.join("");
 }
 
 export function renderText(text) {
