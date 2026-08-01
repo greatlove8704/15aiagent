@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Đang tải…</title>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=4">
 </head>
 <body>
 <main class="wrap reader">
@@ -42,38 +42,44 @@
 </aside>
 
 <script type="module">
-import { META, getChapters, getChapterText, renderText, qs, getFontSize, setFontSize } from "./assets/app.js";
-
-const file = qs("c");
 const titleEl = document.getElementById("title");
 const bodyEl = document.getElementById("body");
 
-/* ---- cỡ chữ ---- */
-const fontVal = document.getElementById("fontVal");
-let size = setFontSize(getFontSize());
-fontVal.textContent = size;
-const bump = d => { size = setFontSize(size + d); fontVal.textContent = size; };
-document.getElementById("fontUp").onclick = () => bump(1);
-document.getElementById("fontDown").onclick = () => bump(-1);
-
-/* ---- drawer ---- */
-const drawer = document.getElementById("drawer");
-const backdrop = document.getElementById("backdrop");
-const setOpen = on => {
-  drawer.classList.toggle("open", on);
-  backdrop.classList.toggle("open", on);
-  drawer.setAttribute("aria-hidden", String(!on));
-  if (on) drawer.querySelector(".d-item.active")?.scrollIntoView({ block: "center" });
-};
-document.getElementById("tab").onclick = () => setOpen(!drawer.classList.contains("open"));
-document.getElementById("close").onclick = () => setOpen(false);
-backdrop.onclick = () => setOpen(false);
-
-/* ---- nội dung ---- */
 try {
+  const mod = await import("./assets/app.js?v=4");
+  const { META, getChapters, getChapterText, renderText, qs, getFontSize, setFontSize } = mod;
+
+  const file = qs("c");
+
+  /* ---- cỡ chữ ---- */
+  const fontVal = document.getElementById("fontVal");
+  let size = setFontSize(getFontSize());
+  fontVal.textContent = size;
+  const bump = d => { size = setFontSize(size + d); fontVal.textContent = size; };
+  document.getElementById("fontUp").onclick = () => bump(1);
+  document.getElementById("fontDown").onclick = () => bump(-1);
+
+  /* ---- sidebar ---- */
+  const drawer = document.getElementById("drawer");
+  const backdrop = document.getElementById("backdrop");
+  const setOpen = on => {
+    drawer.classList.toggle("open", on);
+    backdrop.classList.toggle("open", on);
+    drawer.setAttribute("aria-hidden", String(!on));
+    if (on) {
+      const act = drawer.querySelector(".d-item.active");
+      if (act) act.scrollIntoView({ block: "center" });
+    }
+  };
+  document.getElementById("tab").onclick = () => setOpen(!drawer.classList.contains("open"));
+  document.getElementById("close").onclick = () => setOpen(false);
+  backdrop.onclick = () => setOpen(false);
+  addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
+
+  /* ---- nội dung ---- */
   const chapters = await getChapters();
   const i = chapters.findIndex(c => c.file === file);
-  if (i === -1) throw new Error("Không tìm thấy chương.");
+  if (i === -1) throw new Error("Không tìm thấy chương này.");
   const cur = chapters[i];
 
   document.title = (cur.num ? `Chương ${cur.num}: ${cur.title}` : cur.title) + " — " + META.title;
@@ -94,7 +100,6 @@ try {
   link(document.getElementById("next"), chapters[i + 1]);
 
   addEventListener("keydown", e => {
-    if (e.key === "Escape") return setOpen(false);
     if (e.key === "ArrowLeft" && chapters[i - 1]) location.href = `chapter.html?c=${encodeURIComponent(chapters[i-1].file)}`;
     if (e.key === "ArrowRight" && chapters[i + 1]) location.href = `chapter.html?c=${encodeURIComponent(chapters[i+1].file)}`;
   });

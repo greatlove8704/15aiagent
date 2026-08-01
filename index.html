@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Đang tải…</title>
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=4">
 </head>
 <body>
 <main class="wrap home">
@@ -16,15 +16,15 @@
 </main>
 
 <script type="module">
-import { META, getChapters } from "./assets/app.js";
-
-document.title = META.title;
-document.getElementById("title").textContent = META.title;
-document.getElementById("author").textContent = META.author;
-document.getElementById("intro").textContent = META.intro;
-
 const list = document.getElementById("list");
 try {
+  const { META, getChapters } = await import("./assets/app.js?v=4");
+
+  document.title = META.title;
+  document.getElementById("title").textContent = META.title;
+  document.getElementById("author").textContent = META.author;
+  document.getElementById("intro").textContent = META.intro;
+
   const chapters = await getChapters();
   if (!chapters.length) {
     list.innerHTML = '<li class="muted">Chưa có chương nào.</li>';
@@ -35,7 +35,7 @@ try {
     ).join("");
   }
 } catch (e) {
-  list.innerHTML = `<li class="muted">Không tải được danh sách chương. ${e.message}</li>`;
+  list.innerHTML = `<li class="muted">Lỗi: ${e.message}</li>`;
 }
 </script>
 </body>
