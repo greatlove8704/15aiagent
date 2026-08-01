@@ -2,8 +2,8 @@
 //  SỬA 3 DÒNG DƯỚI ĐÂY ĐỂ ĐỔI TÊN TRUYỆN / BÚT DANH / GIỚI THIỆU
 // ============================================================
 export const META = {
-  title: "Tên truyện của bạn",
-  author: "Bút danh",
+  title: "334",
+  author: "15",
   // Xuống dòng bằng cách gõ Enter bình thường trong cặp dấu `...`
   intro: `Viết giới thiệu truyện ở đây.`,
 };
