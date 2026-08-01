@@ -1,12 +1,22 @@
-// ==== CAU HINH ====
+// ============================================================
+//  SỬA 3 DÒNG DƯỚI ĐÂY ĐỂ ĐỔI TÊN TRUYỆN / BÚT DANH / GIỚI THIỆU
+// ============================================================
+export const META = {
+  title: "Tên truyện của bạn",
+  author: "Bút danh",
+  // Xuống dòng bằng cách gõ Enter bình thường trong cặp dấu `...`
+  intro: `Viết giới thiệu truyện ở đây.`,
+};
+
+// ==== CẤU HÌNH KỬTHUẬT (đừng sửa nếu không cần) ====
 const CFG = {
   owner: "greatlove8704",
   repo: "15aiagent",
   branch: "main",
-  apiDir: "chapters", // duong dan trong repo
-  localDir: "chapters", // duong dan tuong doi tu trang nay
+  apiDir: "chapters",
+  localDir: "chapters",
 };
-// ==================
+// ==================================================
 
 const CACHE_KEY = "chapters_cache_v3";
 const CACHE_TTL = 10 * 60 * 1000; // 10 phut
@@ -27,7 +37,7 @@ function parseName(filename) {
   return { order: 1e9, num: "", title: base, file: filename, parts: [] };
 }
 
-// Gom cac file "<ten>.txt" + "<ten>.part2.txt" + "<ten>.part3.txt" thanh 1 chuong.
+// Gom "<ten>.txt" + "<ten>.part2.txt" + ... thanh 1 chuong.
 function buildChapters(names) {
   const bases = [];
   const partsMap = {};
@@ -102,7 +112,6 @@ async function fetchOne(file) {
   return res.text();
 }
 
-// Nhan vao object chuong (tu getChapters) hoac ten file.
 export async function getChapterText(chapter) {
   const first = typeof chapter === "string" ? chapter : chapter.file;
   const parts = typeof chapter === "string" ? [] : (chapter.parts || []);
@@ -126,4 +135,19 @@ export function renderText(text) {
 
 export function qs(name) {
   return new URLSearchParams(location.search).get(name);
+}
+
+// ==== CỠ CHỮ (dùng chung) ====
+const FS_MIN = 14, FS_MAX = 28, FS_DEFAULT = 19;
+
+export function getFontSize() {
+  const v = parseInt(localStorage.getItem("fontSize") || FS_DEFAULT, 10);
+  return isNaN(v) ? FS_DEFAULT : Math.min(FS_MAX, Math.max(FS_MIN, v));
+}
+
+export function setFontSize(v) {
+  const size = Math.min(FS_MAX, Math.max(FS_MIN, v));
+  document.documentElement.style.setProperty("--fs", size + "px");
+  localStorage.setItem("fontSize", size);
+  return size;
 }

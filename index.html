@@ -3,36 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Truyện</title>
+<title>Đang tải…</title>
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-<main class="wrap">
-  <header>
-    <h1>Tên truyện</h1>
-    <p class="sub">Một dòng giới thiệu ngắn.</p>
-  </header>
-  <ol id="list" class="toc"><li class="muted">Đang tải…</li></ol>
-  <footer class="muted">Danh sách chương tự cập nhật từ thư mục <code>chapters/</code>.</footer>
+<main class="wrap home">
+  <h1 id="title"></h1>
+  <p class="author" id="author"></p>
+  <p class="intro" id="intro"></p>
+  <hr>
+  <ul class="toc" id="list"><li class="loading muted">Đang tải danh sách chương…</li></ul>
 </main>
 
 <script type="module">
-import { getChapters } from "./assets/app.js";
+import { META, getChapters } from "./assets/app.js";
 
-const el = document.getElementById("list");
+document.title = META.title;
+document.getElementById("title").textContent = META.title;
+document.getElementById("author").textContent = META.author;
+document.getElementById("intro").textContent = META.intro;
+
+const list = document.getElementById("list");
 try {
   const chapters = await getChapters();
-  el.innerHTML = chapters.length
-    ? chapters.map(c => `
-        <li>
-          <a href="chapter.html?c=${encodeURIComponent(c.file)}">
-            ${c.num ? `<span class="num">Chương ${c.num}</span>` : ""}
-            <span class="title">${c.title}</span>
-          </a>
-        </li>`).join("")
-    : `<li class="muted">Chưa có chương nào.</li>`;
+  if (!chapters.length) {
+    list.innerHTML = '<li class="muted">Chưa có chương nào.</li>';
+  } else {
+    list.innerHTML = chapters.map(c =>
+      `<li><a href="chapter.html?c=${encodeURIComponent(c.file)}">` +
+      `<span class="num">${c.num}</span><span class="title">${c.title}</span></a></li>`
+    ).join("");
+  }
 } catch (e) {
-  el.innerHTML = `<li class="muted">Không tải được danh sách chương.</li>`;
+  list.innerHTML = `<li class="muted">Không tải được danh sách chương. ${e.message}</li>`;
 }
 </script>
 </body>

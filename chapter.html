@@ -10,9 +10,6 @@
 <main class="wrap reader">
   <nav class="bar">
     <a href="index.html">← Mục lục</a>
-    <span class="spacer"></span>
-    <button id="fontDown" title="Chữ nhỏ hơn">A−</button>
-    <button id="fontUp" title="Chữ to hơn">A+</button>
   </nav>
 
   <h1 id="title">Đang tải…</h1>
@@ -25,32 +22,68 @@
   </nav>
 </main>
 
+<button class="tab" id="tab" aria-label="Mở mục lục">☰</button>
+<div class="backdrop" id="backdrop"></div>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <header>
+    <h2>Mục lục</h2>
+    <span class="spacer"></span>
+    <button class="x" id="close" aria-label="Đóng">✕</button>
+  </header>
+  <div class="font-row">
+    <span>Cỡ chữ</span>
+    <span class="spacer"></span>
+    <button id="fontDown" aria-label="Nhỏ hơn">A−</button>
+    <span id="fontVal" class="fval"></span>
+    <button id="fontUp" aria-label="To hơn">A+</button>
+  </div>
+  <nav class="d-list" id="dlist"></nav>
+</aside>
+
 <script type="module">
-import { getChapters, getChapterText, renderText, qs } from "./assets/app.js";
+import { META, getChapters, getChapterText, renderText, qs, getFontSize, setFontSize } from "./assets/app.js";
 
 const file = qs("c");
 const titleEl = document.getElementById("title");
 const bodyEl = document.getElementById("body");
 
-const root = document.documentElement;
-let size = parseInt(localStorage.getItem("fontSize") || "19", 10);
-const applySize = () => {
-  root.style.setProperty("--fs", size + "px");
-  localStorage.setItem("fontSize", size);
-};
-applySize();
-document.getElementById("fontUp").onclick = () => { size = Math.min(28, size + 1); applySize(); };
-document.getElementById("fontDown").onclick = () => { size = Math.max(14, size - 1); applySize(); };
+/* ---- cỡ chữ ---- */
+const fontVal = document.getElementById("fontVal");
+let size = setFontSize(getFontSize());
+fontVal.textContent = size;
+const bump = d => { size = setFontSize(size + d); fontVal.textContent = size; };
+document.getElementById("fontUp").onclick = () => bump(1);
+document.getElementById("fontDown").onclick = () => bump(-1);
 
+/* ---- drawer ---- */
+const drawer = document.getElementById("drawer");
+const backdrop = document.getElementById("backdrop");
+const setOpen = on => {
+  drawer.classList.toggle("open", on);
+  backdrop.classList.toggle("open", on);
+  drawer.setAttribute("aria-hidden", String(!on));
+  if (on) drawer.querySelector(".d-item.active")?.scrollIntoView({ block: "center" });
+};
+document.getElementById("tab").onclick = () => setOpen(!drawer.classList.contains("open"));
+document.getElementById("close").onclick = () => setOpen(false);
+backdrop.onclick = () => setOpen(false);
+
+/* ---- nội dung ---- */
 try {
   const chapters = await getChapters();
   const i = chapters.findIndex(c => c.file === file);
   if (i === -1) throw new Error("Không tìm thấy chương.");
   const cur = chapters[i];
 
-  document.title = cur.num ? `Chương ${cur.num} — ${cur.title}` : cur.title;
+  document.title = (cur.num ? `Chương ${cur.num}: ${cur.title}` : cur.title) + " — " + META.title;
   titleEl.textContent = cur.num ? `Chương ${cur.num}: ${cur.title}` : cur.title;
   bodyEl.innerHTML = renderText(await getChapterText(cur));
+
+  document.getElementById("dlist").innerHTML = chapters.map(c =>
+    `<a class="d-item${c.file === cur.file ? " active" : ""}" href="chapter.html?c=${encodeURIComponent(c.file)}">` +
+    `<span class="num">${c.num}</span><span>${c.title}</span></a>`
+  ).join("");
 
   const link = (el, ch) => {
     if (!ch) return;
@@ -61,6 +94,7 @@ try {
   link(document.getElementById("next"), chapters[i + 1]);
 
   addEventListener("keydown", e => {
+    if (e.key === "Escape") return setOpen(false);
     if (e.key === "ArrowLeft" && chapters[i - 1]) location.href = `chapter.html?c=${encodeURIComponent(chapters[i-1].file)}`;
     if (e.key === "ArrowRight" && chapters[i + 1]) location.href = `chapter.html?c=${encodeURIComponent(chapters[i+1].file)}`;
   });
